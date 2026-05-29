@@ -1,0 +1,181 @@
+<!-- ── Backdrop ─────────────────────────────────────────────────────────── -->
+<div class="modal-backdrop" (click)="closeOverlay()"></div>
+
+<!-- ── Main modal ──────────────────────────────────────────────────────────── -->
+<div class="modal-shell" role="dialog" aria-modal="true" aria-labelledby="marketingControlTitle">
+  <div class="modal-dialog" (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="modal-head">
+      <div class="modal-head-left">
+        <div class="modal-icon">
+          <i class="ti ti-chart-line"></i>
+        </div>
+        <div>
+          <div class="modal-tag">Contrôle Marketing</div>
+          <h2 class="modal-title" id="marketingControlTitle">Contrôle Marketing</h2>
+          <p class="modal-subtitle">Activer ou désactiver le marketing globalement et par business</p>
+        </div>
+      </div>
+      <button class="close-btn" (click)="closeOverlay()" aria-label="Fermer">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body">
+
+      <!-- ── Global Marketing card ──────────────────────────────────────── -->
+      <div class="status-card status-card--global">
+        <div class="card-top">
+          <div class="card-info">
+            <div class="card-icon card-icon--global">
+              <i class="ti ti-world"></i>
+            </div>
+            <div>
+              <div class="status-title">Marketing Global</div>
+              <div class="status-subtitle">S'applique à tous les business et toutes les campagnes</div>
+            </div>
+          </div>
+
+          <!-- Loading -->
+          <div *ngIf="isLoading()" class="loading-row">
+            <div class="spinner"></div>
+            <span>Chargement…</span>
+          </div>
+
+          <!-- State + toggle -->
+          <ng-container *ngIf="!isLoading()">
+            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+              <span [class]="'state-indicator ' + (globalEnabled() ? 'state-enabled' : 'state-disabled')">
+                <span class="state-dot"></span>
+                {{ globalEnabled() ? 'Activé' : 'Désactivé' }}
+              </span>
+              <button
+                [class]="'btn-toggle ' + (globalEnabled() ? 'btn-toggle--disable' : 'btn-toggle--enable')"
+                [disabled]="!canEditMarketing()"
+                (click)="requestGlobalToggle()"
+                [title]="canEditMarketing() ? 'Cliquer pour basculer' : 'Vous n\'avez pas les droits pour modifier le marketing'">
+                <i [class]="'ti ' + (globalEnabled() ? 'ti-player-stop' : 'ti-player-play')"></i>
+                {{ globalEnabled() ? 'Désactiver' : 'Activer' }}
+              </button>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- ── Business Marketing card ────────────────────────────────────── -->
+      <div class="status-card status-card--business">
+        <div class="card-top">
+          <div class="card-info">
+            <div class="card-icon card-icon--business">
+              <i class="ti ti-building-store"></i>
+            </div>
+            <div>
+              <div class="status-title">{{ businessName() }}</div>
+              <div class="status-subtitle">Contrôle marketing au niveau du business</div>
+            </div>
+          </div>
+
+          <!-- No business selected -->
+          <div *ngIf="!businessId" class="no-business-note">
+            <i class="ti ti-info-circle"></i>
+            Aucun business sélectionné
+          </div>
+
+          <!-- Loading -->
+          <div *ngIf="isLoading() && businessId" class="loading-row">
+            <div class="spinner"></div>
+            <span>Chargement…</span>
+          </div>
+
+          <!-- State + toggle -->
+          <ng-container *ngIf="!isLoading() && businessId">
+            <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+              <span [class]="'state-indicator ' + (businessEnabled() ? 'state-enabled' : 'state-disabled')">
+                <span class="state-dot"></span>
+                {{ businessEnabled() ? 'Activé' : 'Désactivé' }}
+              </span>
+              <button
+                [class]="'btn-toggle ' + (businessEnabled() ? 'btn-toggle--disable' : 'btn-toggle--enable')"
+                [disabled]="!canEditMarketing()"
+                (click)="requestBusinessToggle()"
+                [title]="canEditMarketing() ? 'Cliquer pour basculer' : 'Vous n\'avez pas les droits pour modifier le marketing'">
+                <i [class]="'ti ' + (businessEnabled() ? 'ti-player-stop' : 'ti-player-play')"></i>
+                {{ businessEnabled() ? 'Désactiver' : 'Activer' }}
+              </button>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- Toast message -->
+      <div *ngIf="statusMessage()" class="toast-message">
+        <i class="ti ti-circle-check"></i>
+        {{ statusMessage() }}
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="error()" class="error-box">
+        <i class="ti ti-alert-triangle"></i>
+        {{ error() }}
+      </div>
+
+    </div><!-- /modal-body -->
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button class="btn-close-footer" (click)="closeOverlay()">
+        <i class="ti ti-x"></i> Fermer
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     CONFIRMATION DIALOG  (shown on top when pendingAction is set)
+════════════════════════════════════════════════════════════════════════════ -->
+<ng-container *ngIf="pendingAction()">
+  <div class="confirm-backdrop"></div>
+  <div class="confirm-shell" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+
+    <div class="confirm-dialog" (click)="$event.stopPropagation()">
+
+      <!-- Confirm header -->
+      <div class="confirm-head">
+        <div class="confirm-title-row">
+          <i class="ti ti-edit"></i>
+          <span class="confirm-title" id="confirmTitle">Confirmer les modifications</span>
+        </div>
+        <button class="confirm-close" (click)="cancelConfirm()">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+
+      <!-- Confirm body -->
+      <div class="confirm-body">
+        <div [class]="'confirm-icon-wrap ' + (isDisableAction() ? 'confirm-icon-wrap--warning' : 'confirm-icon-wrap--success')">
+          <i [class]="'ti ' + (isDisableAction() ? 'ti-alert-circle' : 'ti-circle-check')"></i>
+        </div>
+        <div class="confirm-text">
+          <div class="confirm-message">{{ confirmMessage() }}</div>
+          <div class="confirm-detail">Cette modification prendra effet immédiatement.</div>
+        </div>
+      </div>
+
+      <!-- Confirm footer -->
+      <div class="confirm-footer">
+        <button class="btn-confirm-cancel" (click)="cancelConfirm()">
+          <i class="ti ti-x"></i> Non
+        </button>
+        <button
+          [class]="'btn-confirm-yes ' + (isDisableAction() ? 'btn-confirm-yes--danger' : 'btn-confirm-yes--success')"
+          (click)="confirmAction()">
+          <i class="ti ti-check"></i> Oui
+        </button>
+      </div>
+
+    </div>
+  </div>
+</ng-container>

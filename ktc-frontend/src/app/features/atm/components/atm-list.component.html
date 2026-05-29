@@ -1,0 +1,243 @@
+<div class="page-wrapper">
+
+  <!-- ── Page header ─────────────────────────────────────────────────────── -->
+  <div class="page-head">
+    <div>
+      <div class="page-breadcrumb">
+        Administration <span>›</span> ATMs
+      </div>
+      <h1 class="page-title">Distributeurs automatiques</h1>
+      <p class="page-subtitle">Gestion et supervision du parc d'ATMs</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-secondary" (click)="goMap()">
+        <span class="btn-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/>
+            <line x1="9" y1="3" x2="9" y2="18"/>
+            <line x1="15" y1="6" x2="15" y2="21"/>
+          </svg>
+        </span>
+        Vue carte
+      </button>
+      <button *appHasRole="['Support']" class="btn btn-primary" (click)="goCreate()">
+        <span class="btn-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </span>
+        Nouvel ATM
+      </button>
+    </div>
+  </div>
+
+  <!-- ── KPI strip ───────────────────────────────────────────────────────── -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <span class="kpi-value">{{ totalCount() }}</span>
+      <span class="kpi-label">Total</span>
+    </div>
+    <div class="kpi-card kpi-card--ok">
+      <span class="kpi-value">{{ activeCount() }}</span>
+      <span class="kpi-label">Actifs</span>
+    </div>
+    <div class="kpi-card kpi-card--down">
+      <span class="kpi-value">{{ inactiveCount() }}</span>
+      <span class="kpi-label">Inactifs</span>
+    </div>
+  </div>
+
+  <!-- ── Toolbar ─────────────────────────────────────────────────────────── -->
+  <div class="toolbar">
+    <div class="search-wrapper">
+      <span class="search-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Rechercher par nom, IP, ID…"
+        [(ngModel)]="searchQuery"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+    </div>
+    <div class="filter-group">
+      <button class="filter-btn"
+        [class.active]="filterStatus() === 'all'"
+        (click)="filterStatus.set('all')">Tous</button>
+      <button class="filter-btn filter-btn--ok"
+        [class.active]="filterStatus() === 'active'"
+        (click)="filterStatus.set('active')">Actifs</button>
+      <button class="filter-btn filter-btn--down"
+        [class.active]="filterStatus() === 'inactive'"
+        (click)="filterStatus.set('inactive')">Inactifs</button>
+    </div>
+  </div>
+
+  <!-- ── Loading (Skeleton cards) ───────────────────────────────────────── -->
+  <div *ngIf="isLoading()" class="atm-grid atm-grid--skeleton">
+    <article class="atm-card atm-card--skeleton" *ngFor="let item of [1,2,3,4,5,6]">
+      <div class="skeleton-line skeleton-line--title"></div>
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line skeleton-line--short"></div>
+    </article>
+  </div>
+
+  <!-- ── Error ───────────────────────────────────────────────────────────── -->
+  <div *ngIf="error() && !isLoading()" class="error-box">
+    <span class="error-box__msg">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      {{ error() }}
+    </span>
+    <button class="btn btn-secondary btn--sm" (click)="load()">Réessayer</button>
+  </div>
+
+  <!-- ── Cards ───────────────────────────────────────────────────────────── -->
+  <div *ngIf="!isLoading() && !error()" class="card-surface">
+
+    <div class="card-toolbar">
+      <span class="card-toolbar-label">Trier par</span>
+      <button class="sort-chip" (click)="sort('clientName')">
+        Nom <span>{{ sortIcon('clientName') }}</span>
+      </button>
+      <button class="sort-chip" (click)="sort('clientId')">
+        ID <span>{{ sortIcon('clientId') }}</span>
+      </button>
+      <button class="sort-chip" (click)="sort('active')">
+        Statut <span>{{ sortIcon('active') }}</span>
+      </button>
+    </div>
+
+    <div *ngIf="filtered().length === 0" class="empty-state">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          <line x1="12" y1="12" x2="12" y2="16"/>
+          <line x1="10" y1="14" x2="14" y2="14"/>
+        </svg>
+      </div>
+      <p>Aucun ATM trouvé avec ces filtres</p>
+    </div>
+
+    <div *ngIf="filtered().length > 0" class="atm-grid">
+      <article
+        *ngFor="let atm of filtered(); trackBy: trackByClientId"
+        class="atm-card"
+        (click)="goEdit(atm.clientId)"
+      >
+        <!-- Head -->
+        <header class="atm-card__head">
+          <div class="name-cell">
+            <span class="status-dot"
+              [class.dot--ok]="atm.active"
+              [class.dot--down]="!atm.active">
+            </span>
+            <h3>{{ atm.clientName }}</h3>
+          </div>
+          <span class="badge"
+            [class.badge--ok]="atm.active"
+            [class.badge--down]="!atm.active">
+            {{ atm.active ? 'Online' : 'Offline' }}
+          </span>
+        </header>
+
+        <!-- Meta -->
+        <div class="atm-card__meta">
+          <div class="meta-row">
+            <span class="meta-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                <line x1="6" y1="6" x2="6.01" y2="6"/>
+                <line x1="6" y1="18" x2="6.01" y2="18"/>
+              </svg>
+            </span>
+            <span class="meta-label">ID</span>
+            <span>#{{ atm.clientId }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+            </span>
+            <span class="meta-label">IP</span>
+            <code>{{ atm.networkAddress }}</code>
+          </div>
+          <div class="meta-row">
+            <span class="meta-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <line x1="2" y1="10" x2="22" y2="10"/>
+              </svg>
+            </span>
+            <span class="meta-label">Type</span>
+            <span>{{ atm.hardwareTypeName ?? 'Unknown' }}</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
+                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+                <line x1="6" y1="1" x2="6" y2="4"/>
+                <line x1="10" y1="1" x2="10" y2="4"/>
+                <line x1="14" y1="1" x2="14" y2="4"/>
+              </svg>
+            </span>
+            <span class="meta-label">Conn.</span>
+            <span class="conn-badge" [ngClass]="'conn-' + atm.connectable">
+              {{ connectableLabel(atm.connectable) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <footer class="atm-card__actions">
+          <button *appHasRole="['Support']" class="icon-btn icon-btn--edit" title="Modifier"
+            (click)="goEdit(atm.clientId); $event.stopPropagation()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Modifier
+          </button>
+          <button *appHasRole="['Support']" class="icon-btn icon-btn--del" title="Supprimer"
+            (click)="confirmDelete(atm); $event.stopPropagation()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+            Supprimer
+          </button>
+          @if (!auth.isSupport()) {
+            <span class="badge-readonly" title="Lecture seule">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              Lecture seule
+            </span>
+          }
+        </footer>
+      </article>
+    </div>
+
+    <div class="table-footer">
+      {{ filtered().length }} ATM(s) affiché(s)
+    </div>
+
+  </div>
+
+</div>

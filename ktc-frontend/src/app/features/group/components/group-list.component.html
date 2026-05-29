@@ -1,0 +1,434 @@
+﻿<div class="page-wrapper">
+
+  <!-- ── Page Header ──────────────────────────────────────────────────────── -->
+  <div class="page-head">
+    <div>
+      <div class="page-breadcrumb">Administration <span>›</span> Groupes</div>
+      <h1 class="page-title">Groupes d'ATMs</h1>
+      <p class="page-subtitle">Gestion des groupes et affectation des terminaux</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-primary" (click)="goCreate()">
+        <span class="btn-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </span>
+        Nouveau groupe
+      </button>
+    </div>
+  </div>
+
+  <!-- ── KPI strip ───────────────────────────────────────────────────────── -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <span class="kpi-value">{{ totalCount() }}</span>
+      <span class="kpi-label">Total groupes</span>
+    </div>
+  </div>
+
+  <!-- ── Toolbar ─────────────────────────────────────────────────────────── -->
+  <div class="toolbar">
+    <div class="search-wrapper">
+      <span class="search-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+      </span>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="Rechercher par nom, description, ID…"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+      />
+    </div>
+  </div>
+
+  <!-- ── Loading (Skeleton cards) ───────────────────────────────────────── -->
+  <div *ngIf="isLoading()" class="group-grid group-grid--skeleton">
+    <article class="group-card group-card--skeleton" *ngFor="let item of [1,2,3,4,5,6]">
+      <div class="skeleton-line skeleton-line--title"></div>
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line"></div>
+      <div class="skeleton-line skeleton-line--short"></div>
+    </article>
+  </div>
+
+  <!-- ── Error ───────────────────────────────────────────────────────────── -->
+  <div *ngIf="error() && !isLoading()" class="error-box">
+    <span class="error-box__msg">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      {{ error() }}
+    </span>
+    <button class="btn btn-secondary btn--sm" (click)="load()">Réessayer</button>
+  </div>
+
+  <!-- ── Cards ───────────────────────────────────────────────────────────── -->
+  <div *ngIf="!isLoading() && !error()" class="card-surface">
+
+    <div class="card-toolbar">
+      <span class="card-toolbar-label">Trier par</span>
+      <button class="sort-chip" (click)="sort('groupName')">
+        Nom <span>{{ sortIcon('groupName') }}</span>
+      </button>
+      <button class="sort-chip" (click)="sort('groupId')">
+        ID <span>{{ sortIcon('groupId') }}</span>
+      </button>
+      <button class="sort-chip" (click)="sort('groupTypeId')">
+        Type <span>{{ sortIcon('groupTypeId') }}</span>
+      </button>
+    </div>
+
+    <div *ngIf="filtered().length === 0" class="empty-state">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+      <p>Aucun groupe trouvé avec ces filtres</p>
+    </div>
+
+    <div *ngIf="filtered().length > 0" class="group-grid">
+      <article
+        *ngFor="let g of filtered()"
+        class="group-card"
+        [class.group-card--active]="selectedGroupId() === g.groupId"
+        (click)="selectGroup(g.groupId)"
+      >
+        <!-- Head -->
+        <header class="group-card__head">
+          <div class="name-cell">
+            <span class="status-dot dot--ok"></span>
+            <h3>{{ g.groupName }}</h3>
+          </div>
+          <span class="type-badge type-{{ g.groupTypeId ?? 0 }}">
+            {{ groupTypeLabel(g.groupTypeId) }}
+          </span>
+        </header>
+
+        <!-- Meta -->
+        <div class="group-card__meta">
+          <div class="meta-row">
+            <span class="meta-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                <line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+              </svg>
+            </span>
+            <span class="meta-label">ID</span>
+            <span>#{{ g.groupId }}</span>
+          </div>
+          <div class="meta-row" *ngIf="g.groupDescription">
+            <span class="meta-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="17" y1="10" x2="3" y2="10"/>
+                <line x1="21" y1="6" x2="3" y2="6"/>
+                <line x1="21" y1="14" x2="3" y2="14"/>
+                <line x1="17" y1="18" x2="3" y2="18"/>
+              </svg>
+            </span>
+            <span class="meta-label">Description</span>
+            <span class="meta-truncate">{{ g.groupDescription }}</span>
+          </div>
+          <div class="meta-row" *ngIf="!g.groupDescription">
+            <span class="meta-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="17" y1="10" x2="3" y2="10"/>
+                <line x1="21" y1="6" x2="3" y2="6"/>
+                <line x1="21" y1="14" x2="3" y2="14"/>
+                <line x1="17" y1="18" x2="3" y2="18"/>
+              </svg>
+            </span>
+            <span class="meta-label">Description</span>
+            <span class="meta-empty">—</span>
+          </div>
+          <div class="meta-row">
+            <span class="meta-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </span>
+            <span class="meta-label">Intervalle</span>
+            <code *ngIf="g.evaluationInterval">{{ g.evaluationInterval }} min</code>
+            <span *ngIf="!g.evaluationInterval" class="meta-empty">—</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <footer class="group-card__actions">
+          <button class="icon-btn icon-btn--edit" title="Modifier"
+            (click)="goEdit(g.groupId); $event.stopPropagation()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Modifier
+          </button>
+          <button class="icon-btn icon-btn--del" title="Supprimer"
+            (click)="confirmDelete(g); $event.stopPropagation()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/>
+              <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+            </svg>
+            Supprimer
+          </button>
+        </footer>
+      </article>
+    </div>
+
+    <div class="table-footer">
+      {{ filtered().length }} groupe(s) affiché(s)
+    </div>
+
+  </div>
+
+  <!-- ── Panneau détails (slide-in quand un groupe est sélectionné) ──────── -->
+  <div *ngIf="selectedGroupId()" class="detail-overlay" (click)="closeDetail()">
+    <div class="detail-panel" (click)="$event.stopPropagation()">
+
+      <!-- Chargement -->
+      <div *ngIf="!selectedGroupDtl()" class="state-box">
+        <div class="spinner"></div>
+        <p>Chargement du groupe…</p>
+      </div>
+
+      <ng-container *ngIf="selectedGroupDtl()">
+
+        <!-- Header -->
+        <div class="detail-panel__head">
+          <div class="detail-panel__head-left">
+            <div class="page-breadcrumb">Groupes <span>›</span> Détails</div>
+            <h2 class="details-title">{{ selectedGroupDtl()!.groupName }}</h2>
+            <div class="details-chips">
+              <span class="type-badge type-{{ selectedGroupDtl()!.groupTypeId ?? 0 }}">
+                {{ groupTypeLabel(selectedGroupDtl()!.groupTypeId) }}
+              </span>
+              <span *ngIf="selectedGroupDtl()!.evaluationInterval" class="meta-chip">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                {{ selectedGroupDtl()!.evaluationInterval }} min
+              </span>
+              <span *ngIf="selectedGroupDtl()!.includeMothballed" class="meta-chip meta-chip--warn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Inclut désactivés
+              </span>
+            </div>
+          </div>
+          <div class="detail-panel__head-right">
+            <button class="btn btn-secondary btn--sm" (click)="goEdit(selectedGroupDtl()!.groupId)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Modifier
+            </button>
+            <button class="btn btn-danger btn--sm" (click)="confirmDelete(selectedGroupDtl()!)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6"/><path d="M14 11v6"/>
+                <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+              </svg>
+              Supprimer
+            </button>
+            <button class="btn-close" (click)="closeDetail()" title="Fermer">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpi-strip kpi-strip--panel">
+          <div class="kpi-card">
+            <span class="kpi-value">{{ selectedGroupDtl()!.clients?.length ?? 0 }}</span>
+            <span class="kpi-label">ATMs total</span>
+          </div>
+          <div class="kpi-card kpi-card--ok">
+            <span class="kpi-value">{{ (selectedGroupDtl()!.clients ?? []).filter(c => c.active).length }}</span>
+            <span class="kpi-label">Actifs</span>
+          </div>
+          <div class="kpi-card kpi-card--down">
+            <span class="kpi-value">{{ (selectedGroupDtl()!.clients ?? []).filter(c => !c.active).length }}</span>
+            <span class="kpi-label">Inactifs</span>
+          </div>
+        </div>
+
+        <!-- Body scrollable en 2 colonnes -->
+        <div class="detail-panel__body">
+
+          <!-- COL A — infos + propriétés -->
+          <div class="detail-col">
+
+            <div *ngIf="selectedGroupDtl()!.groupDescription" class="detail-section">
+              <span class="section-label">Description</span>
+              <p class="detail-text">{{ selectedGroupDtl()!.groupDescription }}</p>
+            </div>
+
+            <div *ngIf="selectedGroupDtl()!.groupQuery" class="detail-section">
+              <span class="section-label">Requête dynamique</span>
+              <code class="detail-code">{{ selectedGroupDtl()!.groupQuery }}</code>
+            </div>
+
+            <div class="detail-section">
+              <span class="section-label">Propriétés</span>
+              <div class="props-grid">
+                <div class="prop-item">
+                  <span class="prop-label">ID</span>
+                  <span class="prop-value prop-mono">#{{ selectedGroupDtl()!.groupId }}</span>
+                </div>
+                <div class="prop-item">
+                  <span class="prop-label">Type</span>
+                  <span class="type-badge type-{{ selectedGroupDtl()!.groupTypeId ?? 0 }}">
+                    {{ groupTypeLabel(selectedGroupDtl()!.groupTypeId) }}
+                  </span>
+                </div>
+                <div class="prop-item">
+                  <span class="prop-label">Intervalle éval.</span>
+                  <span class="prop-value">
+                    {{ selectedGroupDtl()!.evaluationInterval ? selectedGroupDtl()!.evaluationInterval + ' min' : '—' }}
+                  </span>
+                </div>
+                <div class="prop-item">
+                  <span class="prop-label">ATMs désactivés</span>
+                  <span *ngIf="selectedGroupDtl()!.includeMothballed" class="prop-flag--warn">Inclus</span>
+                  <span *ngIf="!selectedGroupDtl()!.includeMothballed" class="prop-value prop-muted">Exclus</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- COL B — membres + ajout ATMs -->
+          <div class="detail-col detail-col--members">
+
+            <!-- Membres actuels -->
+            <div class="detail-section">
+              <div class="section-header-row">
+                <span class="section-label">Membres</span>
+                <span class="col-badge">{{ selectedGroupDtl()!.clients?.length ?? 0 }}</span>
+              </div>
+
+              <div *ngIf="!selectedGroupDtl()!.clients || selectedGroupDtl()!.clients!.length === 0"
+                   class="empty-state empty-state--sm">
+                <p>Aucun ATM dans ce groupe</p>
+              </div>
+
+              <div class="members-list" *ngIf="selectedGroupDtl()!.clients && selectedGroupDtl()!.clients!.length > 0">
+                <div *ngFor="let client of selectedGroupDtl()!.clients" class="client-row">
+                  <div class="client-dot"
+                    [class.dot--ok]="client.active"
+                    [class.dot--down]="!client.active">
+                  </div>
+                  <div class="client-info">
+                    <div class="client-name">{{ client.clientName }}</div>
+                    <code class="client-ip">{{ client.networkAddress }}</code>
+                  </div>
+                  <span class="status-chip"
+                    [class.chip--ok]="client.active"
+                    [class.chip--down]="!client.active">
+                    {{ client.active ? 'Actif' : 'Inactif' }}
+                  </span>
+                  <button *ngIf="canEditMembership()" class="icon-btn icon-btn--del" title="Retirer"
+                    (click)="removeClientFromGroup(client.clientId)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                      <path d="M10 11v6"/><path d="M14 11v6"/>
+                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ajouter ATMs -->
+            <div class="detail-section">
+              <span class="section-label">Ajouter des ATMs</span>
+
+              <div *ngIf="!canEditMembership()" class="empty-state empty-state--sm">
+                <p>Ce groupe est calculé automatiquement et ne peut pas être modifié manuellement.</p>
+              </div>
+
+              <ng-container *ngIf="canEditMembership()">
+                <div class="search-box add-search">
+                  <span class="search-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                  </span>
+                  <input
+                    class="search-input search-input--sm"
+                    type="text"
+                    placeholder="Rechercher un ATM…"
+                    [ngModel]="clientSearch()"
+                    (ngModelChange)="clientSearch.set($event)"
+                    (focus)="loadAvailableAtms()"
+                  />
+                </div>
+
+              <div *ngIf="loadingAtms()" class="state-box state-box--compact">
+                <div class="spinner spinner--sm"></div>
+              </div>
+
+              <div *ngIf="!loadingAtms()" class="atms-list">
+                <div *ngIf="availableAtms().length === 0" class="empty-state empty-state--sm">
+                  <p>Aucun ATM disponible</p>
+                </div>
+                <div *ngFor="let atm of availableAtms()" class="atm-row">
+                  <input
+                    type="checkbox"
+                    class="atm-checkbox"
+                    [checked]="isSelected(atm.clientId)"
+                    (change)="toggleSelection(atm.clientId)"
+                  />
+                  <div class="client-dot"
+                    [class.dot--ok]="atm.active"
+                    [class.dot--down]="!atm.active">
+                  </div>
+                  <div class="client-info">
+                    <div class="client-name">#{{ atm.clientId }} — {{ atm.clientName }}</div>
+                    <code class="client-ip">{{ atm.networkAddress }}</code>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="selectedClientIds().size > 0" class="selection-footer">
+                <span class="selection-count">
+                  {{ selectedClientIds().size }} sélectionné{{ selectedClientIds().size > 1 ? 's' : '' }}
+                </span>
+                <button
+                  class="btn btn-success btn--sm"
+                  (click)="addSelectedClients()"
+                  [disabled]="isAddingBulk()"
+                >
+                  <svg *ngIf="!isAddingBulk()" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  {{ isAddingBulk() ? '…' : 'Ajouter' }}
+                </button>
+              </div>
+              </ng-container>
+            </div>
+
+          </div>
+        </div>
+
+      </ng-container>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,262 @@
+<aside class="sidebar" [class.collapsed]="layoutService.isSidebarCollapsed()">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <div class="sidebar-header">
+    <div class="sidebar-brand" *ngIf="!layoutService.isSidebarCollapsed()">
+      <div class="brand-icon">
+        <!-- Grid/network icon -->
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="4" height="4" rx="0.8" fill="currentColor" opacity="0.9"/>
+          <rect x="9" y="1" width="4" height="4" rx="0.8" fill="currentColor" opacity="0.9"/>
+          <rect x="1" y="9" width="4" height="4" rx="0.8" fill="currentColor" opacity="0.9"/>
+          <rect x="9" y="9" width="4" height="4" rx="0.8" fill="currentColor" opacity="0.9"/>
+          <line x1="5" y1="3" x2="9" y2="3" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+          <line x1="5" y1="11" x2="9" y2="11" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+          <line x1="3" y1="5" x2="3" y2="9" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+          <line x1="11" y1="5" x2="11" y2="9" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+        </svg>
+      </div>
+      <span class="sidebar-title">Navigation</span>
+    </div>
+    <button class="toggle-btn" (click)="layoutService.toggleSidebar()" title="Réduire">
+      <span class="toggle-icon">
+        <svg *ngIf="!layoutService.isSidebarCollapsed()" width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6.5 1.5L3 5l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg *ngIf="layoutService.isSidebarCollapsed()" width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3.5 1.5L7 5l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+    </button>
+  </div>
+
+  <!-- ── Collapsed view ─────────────────────────────────────────────────── -->
+  <div class="collapsed-nav" *ngIf="layoutService.isSidebarCollapsed()">
+    <button class="collapsed-tab"
+            [class.active]="activeTab() === 'groups'"
+            (click)="layoutService.toggleSidebar(); setTab('groups')"
+            title="Groupes">
+      <!-- Users/groups icon -->
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="7" cy="6" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M2 14c0-2.8 2.2-4 5-4s5 1.2 5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        <circle cx="13" cy="6" r="2" stroke="currentColor" stroke-width="1.3" opacity="0.6"/>
+        <path d="M15.5 13.5c0-1.8-1.1-3-2.5-3.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity="0.6"/>
+      </svg>
+    </button>
+    <button class="collapsed-tab"
+            [class.active]="activeTab() === 'hierarchy'"
+            (click)="layoutService.toggleSidebar(); setTab('hierarchy')"
+            title="Business/Branch">
+      <!-- Building/bank icon -->
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="3" y="7" width="12" height="8" rx="0.5" stroke="currentColor" stroke-width="1.4"/>
+        <path d="M1.5 7.5L9 2l7.5 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="6.5" y="11" width="2" height="4" rx="0.3" fill="currentColor" opacity="0.7"/>
+        <rect x="9.5" y="11" width="2" height="4" rx="0.3" fill="currentColor" opacity="0.7"/>
+        <line x1="1.5" y1="15" x2="16.5" y2="15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ── Tabs ───────────────────────────────────────────────────────────── -->
+  <div class="tabs" *ngIf="!layoutService.isSidebarCollapsed()">
+    <button class="tab-btn"
+            [class.active]="activeTab() === 'groups'"
+            (click)="setTab('groups')">
+      <span class="tab-icon">
+        <!-- Users/groups icon -->
+        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="7" cy="6" r="2.5" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M2 14c0-2.8 2.2-4 5-4s5 1.2 5 4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <circle cx="13" cy="6" r="2" stroke="currentColor" stroke-width="1.3" opacity="0.6"/>
+          <path d="M15.5 13.5c0-1.8-1.1-3-2.5-3.3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity="0.6"/>
+        </svg>
+      </span>
+      <span class="tab-label">Groupes</span>
+    </button>
+    <button class="tab-btn"
+            [class.active]="activeTab() === 'hierarchy'"
+            (click)="setTab('hierarchy')">
+      <span class="tab-icon">
+        <!-- Building/bank icon -->
+        <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="7" width="12" height="8" rx="0.5" stroke="currentColor" stroke-width="1.4"/>
+          <path d="M1.5 7.5L9 2l7.5 5.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="6.5" y="11" width="2" height="4" rx="0.3" fill="currentColor" opacity="0.7"/>
+          <rect x="9.5" y="11" width="2" height="4" rx="0.3" fill="currentColor" opacity="0.7"/>
+          <line x1="1.5" y1="15" x2="16.5" y2="15" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <span class="tab-label">Business/Branch</span>
+    </button>
+  </div>
+
+  <!-- ── GROUPS ─────────────────────────────────────────────────────────── -->
+  <div class="tab-content" *ngIf="!layoutService.isSidebarCollapsed() && activeTab() === 'groups'">
+
+    <div class="loading-state" *ngIf="loadingGroups()">
+      <div class="spinner-sm"></div>
+      <span>Chargement…</span>
+    </div>
+
+    <ul class="tree-list" *ngIf="!loadingGroups()">
+
+      <li class="tree-node" *ngFor="let group of groups(); let i = index">
+
+        <div class="tree-row"
+             (click)="toggleGroup(group.groupId)"
+             [class.is-expanded]="isGroupExpanded(group.groupId)"
+             [style.animation-delay]="(i * 40) + 'ms'">
+
+          <span class="expand-arrow" [class.open]="isGroupExpanded(group.groupId)">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="node-icon">
+            <!-- Folder/layers icon for group -->
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: var(--sb-accent)">
+              <path d="M1.5 4.5h13v8a1 1 0 01-1 1h-11a1 1 0 01-1-1v-8z" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M1.5 4.5v-1a1 1 0 011-1h3.5l1.5 1.5H14a.5.5 0 01.5.5v.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+            </svg>
+          </span>
+          <span class="node-label">{{ group.groupName }}</span>
+          <div class="spinner-sm" *ngIf="loadingGroupId() === group.groupId"></div>
+        </div>
+
+        <ul class="tree-children" *ngIf="isGroupExpanded(group.groupId)">
+
+          <li class="leaf-node"
+              *ngFor="let client of getGroupClients(group.groupId)">
+            <span class="status-dot"
+                  [class.dot-ok]="client.active"
+                  [class.dot-down]="!client.active">
+            </span>
+            <span class="node-label">{{ client.clientName }}</span>
+            <code class="node-ip">{{ client.networkAddress }}</code>
+          </li>
+
+          <li class="leaf-empty"
+              *ngIf="!loadingGroupId() && getGroupClients(group.groupId).length === 0">
+            Aucun ATM
+          </li>
+
+        </ul>
+      </li>
+
+      <li class="empty-tree" *ngIf="groups().length === 0">
+        <span class="empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2 7h20v13a1 1 0 01-1 1H3a1 1 0 01-1-1V7z" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M2 7V5a1 1 0 011-1h5l2 2h11a1 1 0 011 1v0" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span>Aucun groupe configuré</span>
+      </li>
+
+    </ul>
+  </div>
+
+  <!-- ── HIERARCHY ──────────────────────────────────────────────────────── -->
+  <div class="tab-content" *ngIf="!layoutService.isSidebarCollapsed() && activeTab() === 'hierarchy'">
+
+    <div class="loading-state" *ngIf="loadingHierarchy()">
+      <div class="spinner-sm"></div>
+      <span>Chargement…</span>
+    </div>
+
+    <ul class="tree-list" *ngIf="!loadingHierarchy()">
+
+      <li class="tree-node" *ngFor="let biz of businesses(); let i = index">
+
+        <div class="tree-row tree-row--biz"
+             (click)="toggleBusiness(biz.businessId)"
+             [class.is-expanded]="isBusinessExpanded(biz.businessId)"
+             [style.animation-delay]="(i * 40) + 'ms'">
+          <span class="expand-arrow" [class.open]="isBusinessExpanded(biz.businessId)">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <!-- Briefcase icon for business -->
+          <span class="node-icon">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1.5" y="5.5" width="13" height="9" rx="1" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M5.5 5.5V4a1 1 0 011-1h3a1 1 0 011 1v1.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+              <line x1="1.5" y1="9.5" x2="14.5" y2="9.5" stroke="currentColor" stroke-width="1.3" opacity="0.4"/>
+            </svg>
+          </span>
+          <span class="node-label">{{ biz.businessName }}</span>
+          <span class="count-pill">{{ biz.branches.length }}</span>
+        </div>
+
+        <ul class="tree-children" *ngIf="isBusinessExpanded(biz.businessId)">
+
+          <li class="tree-node" *ngFor="let branch of biz.branches">
+
+            <div class="tree-row tree-row--branch"
+                 (click)="toggleBranch(branch.branchId)"
+                 [class.is-expanded]="isBranchExpanded(branch.branchId)">
+              <span class="expand-arrow" [class.open]="isBranchExpanded(branch.branchId)">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4.5 2.5L8 6l-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <!-- Office/branch icon -->
+              <span class="node-icon node-icon--sm">
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="2" y="5" width="12" height="10" rx="0.5" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M1 5.5L8 1l7 4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                  <rect x="5.5" y="9.5" width="2" height="3.5" rx="0.3" fill="currentColor" opacity="0.6"/>
+                  <rect x="8.5" y="9.5" width="2" height="3.5" rx="0.3" fill="currentColor" opacity="0.6"/>
+                  <line x1="1" y1="15" x2="15" y2="15" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="node-label">{{ branch.branchName }}</span>
+              <span class="count-pill count-pill--sm">{{ branch.clients.length }}</span>
+            </div>
+
+            <ul class="tree-children" *ngIf="isBranchExpanded(branch.branchId)">
+
+              <li class="leaf-node"
+                  *ngFor="let client of branch.clients"
+                  (click)="goAtmStatus(client.clientId)">
+                <span class="status-dot"
+                      [class.dot-ok]="client.active"
+                      [class.dot-down]="!client.active">
+                </span>
+                <span class="node-label">{{ client.clientName }}</span>
+                <code class="node-ip">{{ client.networkAddress }}</code>
+              </li>
+
+              <li class="leaf-empty" *ngIf="branch.clients.length === 0">
+                Aucun ATM
+              </li>
+
+            </ul>
+          </li>
+
+          <li class="leaf-empty" *ngIf="biz.branches.length === 0">
+            Aucune branche
+          </li>
+
+        </ul>
+      </li>
+
+      <li class="empty-tree" *ngIf="businesses().length === 0">
+        <span class="empty-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="7" width="18" height="14" rx="1" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M2 7.5L12 2l10 5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="9" y="13" width="3" height="5" rx="0.5" fill="currentColor" opacity="0.6"/>
+            <rect x="13" y="13" width="3" height="5" rx="0.5" fill="currentColor" opacity="0.6"/>
+          </svg>
+        </span>
+        <span>Aucune donnée</span>
+      </li>
+
+    </ul>
+  </div>
+
+</aside>

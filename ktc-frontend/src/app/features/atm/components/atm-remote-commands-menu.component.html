@@ -1,0 +1,313 @@
+<!-- Le bouton "Actions distantes" est réservé au rôle Support -->
+<div class="remote-menu" (click)="$event.stopPropagation()">
+
+  <!-- *appHasRole masque structurellement le bouton pour Superviseur -->
+  <button
+    *appHasRole="['Support']"
+    type="button"
+    class="remote-menu__trigger"
+    [class.remote-menu__trigger--open]="menuOpen()"
+    (click)="toggleMenu($event)"
+    title="Commandes distantes : Refresh, Reboot, Supervisor, Upload… (Support uniquement)"
+  >
+    Actions distantes
+    <span class="remote-menu__chev">▾</span>
+  </button>
+
+  @if (menuOpen()) {
+    <div class="remote-menu__panel" role="menu">
+
+      @if (loadError()) {
+        <div class="remote-menu__msg remote-menu__msg--err">{{ loadError() }}</div>
+      }
+
+      @if (mainCommands().length === 0 && uploadCommands().length === 0 && !loadError()) {
+        <div class="remote-menu__msg">
+          Aucune commande reconnue dans
+          <span class="mono">dbo.CommandTypes</span>.
+        </div>
+      }
+
+      @for (c of mainCommands(); track c.commandId) {
+        <button
+          type="button"
+          class="remote-menu__item"
+          role="menuitem"
+          [title]="c.description"
+          (click)="pickCommand(c, $event)"
+        >
+          {{ displayLabel(c.commandName) }}
+        </button>
+      }
+
+      @if (uploadCommands().length > 0) {
+        <div class="remote-menu__upload-block">
+          <button
+            type="button"
+            class="remote-menu__item remote-menu__item--parent"
+            [class.open]="uploadSubmenuOpen()"
+            (click)="toggleUploadSub($event)"
+          >
+            <span class="remote-menu__upload-icon">📤</span>
+            Upload
+            <span class="remote-menu__subchev">▸</span>
+          </button>
+          @if (uploadSubmenuOpen()) {
+            <div class="remote-menu__sublist" role="group" aria-label="Sous-menu Upload">
+              @for (c of uploadCommands(); track c.commandId) {
+                <button
+                  type="button"
+                  class="remote-menu__item remote-menu__item--sub"
+                  role="menuitem"
+                  [title]="c.description"
+                  (click)="pickCommand(c, $event)"
+                >
+                  {{ displayLabel(c.commandName) }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+
+    </div>
+  }
+</div>
+
+<!-- MODAL SÉLECTION ATMs -->
+@if (modalOpen()) {
+  <div class="modal-backdrop" (click)="closePicker()" aria-hidden="true"></div>
+  <div class="modal-shell" role="dialog" aria-modal="true" [attr.aria-labelledby]="'remote-cmd-title'">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+
+      <!-- En-tête -->
+      <div class="modal-header">
+        <div class="modal-icon">⚡</div>
+        <div class="modal-titles">
+          <h2 id="remote-cmd-title" class="modal-title">
+            <strong>{{ displayLabel(activeCommand()?.commandName) }}</strong>
+          </h2>
+          <p class="modal-sub">
+            Sélectionnez les ATMs cibles. Une entrée sera créée dans
+            <span class="mono">dbo.Actions</span> (status Immediate).
+          </p>
+        </div>
+      </div>
+
+      <!-- Opérateur -->
+      <div class="modal-field">
+        <label for="op-name-remote">Opérateur (optionnel)</label>
+        <input
+          id="op-name-remote"
+          type="text"
+          class="modal-input"
+          placeholder="Nom affiché dans l'historique Actions"
+          [ngModel]="initiatedBy()"
+          (ngModelChange)="initiatedBy.set($event)"
+        />
+      </div>
+
+      <!-- === FORMULAIRES D'UPLOAD SPÉCIFIQUES === -->
+
+      <!-- Upload File -->
+      @if (uploadType() === 'file') {
+        <div class="modal-field">
+          <label for="file-upload">Fichier à télécharger</label>
+          <div class="file-upload-wrapper">
+            <input
+              id="file-upload"
+              type="file"
+              class="file-input"
+              (change)="onFileSelected($event)"
+              accept="*"
+            />
+            <label for="file-upload" class="file-upload-label">
+              <span class="file-icon">📎</span>
+              <span class="file-text">
+                @let file = fileParams().file;
+                @if (file) {
+                  <span>{{ file.name }}</span>
+                  <span class="file-size">({{ (file.size / 1024 / 1024 | number: '1.2-2') }} MB)</span>
+                } @else {
+                  <span>Cliquez pour sélectionner un fichier</span>
+                }
+              </span>
+            </label>
+          </div>
+        </div>
+      }
+
+      <!-- Upload Trace -->
+      @if (uploadType() === 'trace') {
+        <div class="modal-field">
+          <label for="trace-type">Type de trace</label>
+          <select
+            id="trace-type"
+            class="modal-input"
+            [ngModel]="traceParams().traceType"
+            (ngModelChange)="traceParams.update(p => ({ ...p, traceType: $event }))"
+          >
+            <option value="Active Trace">Active Trace</option>
+            <option value="Inactive Trace">Inactive Trace</option>
+          </select>
+        </div>
+        <div class="modal-field">
+          <label for="trace-filter">Filtre temporel</label>
+          <select
+            id="trace-filter"
+            class="modal-input"
+            [ngModel]="traceParams().timeFilterType"
+            (ngModelChange)="traceParams.update(p => ({ ...p, timeFilterType: $event }))"
+          >
+            <option value="last30min">Dernières 30 minutes</option>
+            <option value="last1hour">Dernière 1 heure</option>
+            <option value="custom">Filtre personnalisé</option>
+          </select>
+        </div>
+        @if (traceParams().timeFilterType === 'custom') {
+          <div class="modal-field">
+            <label for="trace-custom">Filtre personnalisé</label>
+            <input
+              id="trace-custom"
+              type="text"
+              class="modal-input"
+              placeholder="Ex: My Custom Filter"
+              [ngModel]="traceParams().customFilterValue"
+              (ngModelChange)="traceParams.update(p => ({ ...p, customFilterValue: $event }))"
+            />
+          </div>
+        }
+      }
+
+      <!-- Upload Trace Backup -->
+      @if (uploadType() === 'traceBackup') {
+        <div class="modal-field">
+          <label for="backup-start">Date de début</label>
+          <input
+            id="backup-start"
+            type="datetime-local"
+            class="modal-input"
+            [ngModel]="traceBackupParams().startDate"
+            (ngModelChange)="traceBackupParams.update(p => ({ ...p, startDate: $event }))"
+          />
+        </div>
+        <div class="modal-field">
+          <label for="backup-end">Date de fin</label>
+          <input
+            id="backup-end"
+            type="datetime-local"
+            class="modal-input"
+            [ngModel]="traceBackupParams().endDate"
+            (ngModelChange)="traceBackupParams.update(p => ({ ...p, endDate: $event }))"
+          />
+        </div>
+      }
+
+      <!-- Upload Event Log -->
+      @if (uploadType() === 'eventLog') {
+        <div class="modal-field">
+          <label for="log-type">Type de journal d'événements</label>
+          <select
+            id="log-type"
+            class="modal-input"
+            [ngModel]="eventLogParams().logType"
+            (ngModelChange)="eventLogParams.update(p => ({ ...p, logType: $event }))"
+          >
+            <option value="Application">Application</option>
+            <option value="System">Système</option>
+            <option value="Other">Autre</option>
+            <option value="CustomFilter">Filtre personnalisé</option>
+          </select>
+        </div>
+        @if (eventLogParams().logType === 'CustomFilter') {
+          <div class="modal-field">
+            <label for="log-custom">Filtre personnalisé</label>
+            <input
+              id="log-custom"
+              type="text"
+              class="modal-input"
+              placeholder="Ex: MyCustomFilter"
+              [ngModel]="eventLogParams().customFilter"
+              (ngModelChange)="eventLogParams.update(p => ({ ...p, customFilter: $event }))"
+            />
+          </div>
+        }
+      }
+
+      <!-- Upload Registry -->
+      @if (uploadType() === 'registry') {
+        <div class="modal-field">
+          <label for="registry-key">Clé de registre</label>
+          <input
+            id="registry-key"
+            type="text"
+            class="modal-input"
+            placeholder="Ex: HKLM\Software\..."
+            [ngModel]="registryParams().registryKeyName"
+            (ngModelChange)="registryParams.update(p => ({ ...p, registryKeyName: $event }))"
+          />
+        </div>
+      }
+
+      <!-- Liste ATMs -->
+      <div class="modal-field">
+        <label>ATMs cibles</label>
+      </div>
+      @if (clientsLoading()) {
+        <div class="modal-loading">
+          <div class="loading-dot"></div>
+          <div class="loading-dot"></div>
+          <div class="loading-dot"></div>
+          Chargement des ATMs…
+        </div>
+      } @else {
+        <div class="atm-list">
+          @for (atm of modalClients(); track atm.clientId) {
+            <label class="atm-row">
+              <input type="checkbox" [checked]="isSelected(atm.clientId)" (change)="toggleClient(atm.clientId)" />
+              <span class="atm-row__name">{{ atm.clientName }}</span>
+              <span class="atm-row__ip">{{ atm.networkAddress }}</span>
+            </label>
+          }
+        </div>
+      }
+
+      <!-- Tout cocher -->
+      <label class="check-all">
+        <input
+          type="checkbox"
+          [checked]="checkAllValue()"
+          [disabled]="clientsLoading() || modalClients().length === 0"
+          (change)="onCheckAllChange($event)"
+        />
+        Tout sélectionner ({{ modalClients().length }} ATMs)
+      </label>
+
+      <!-- Erreur -->
+      @if (dispatchError()) {
+        <div class="modal-err">⚠ {{ dispatchError() }}</div>
+      }
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" (click)="closePicker()" [disabled]="dispatching()">
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="confirmDispatch()"
+          [disabled]="dispatching() || clientsLoading()"
+        >
+          @if (dispatching()) {
+            <span class="btn-spinner"></span>
+            Envoi en cours…
+          } @else {
+            Envoyer la commande
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

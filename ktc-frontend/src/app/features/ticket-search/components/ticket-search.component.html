@@ -1,0 +1,309 @@
+<div class="page-wrapper">
+
+  <!-- ── Page header ──────────────────────────────────────────────────── -->
+  <div class="page-head">
+    <div>
+      <div class="page-breadcrumb">Configuration › Ticket Search</div>
+      <h1 class="page-title">Ticket Search</h1>
+      <p class="page-subtitle">Recherche et supervision des tickets ATM</p>
+    </div>
+    <button type="button" class="btn btn-ghost" (click)="loadLookups()">
+      <i class="ti ti-refresh"></i> Actualiser
+    </button>
+  </div>
+
+  <!-- ── KPI strip ────────────────────────────────────────────────────── -->
+  <div class="kpi-strip">
+    <div class="kpi-card kpi-total">
+      <div class="kpi-val">{{ results().length }}</div>
+      <div class="kpi-lbl">Total affiché</div>
+    </div>
+    <div class="kpi-card kpi-open">
+      <div class="kpi-val">{{ openCount() }}</div>
+      <div class="kpi-lbl">Ouverts</div>
+    </div>
+    <div class="kpi-card kpi-closed">
+      <div class="kpi-val">{{ closedCount() }}</div>
+      <div class="kpi-lbl">Fermés</div>
+    </div>
+    <div class="kpi-card kpi-breach">
+      <div class="kpi-val">{{ slaBreachCount() }}</div>
+      <div class="kpi-lbl">SLA dépassés</div>
+    </div>
+  </div>
+
+  <!-- ── Main grid ─────────────────────────────────────────────────────── -->
+  <div class="main-grid">
+
+    <!-- Filters panel -->
+    <aside class="filters-panel">
+
+      <div class="panel-head">
+        <i class="ti ti-filter" aria-hidden="true"></i>
+        <span>Critères de recherche</span>
+      </div>
+
+      <div class="filters-body">
+
+        <!-- Section: Organisation -->
+        <div class="filter-section">
+          <div class="filter-section-label">Organisation</div>
+
+          <div class="fg">
+            <label class="fl">Business (Groupe)</label>
+            <select class="fs" [(ngModel)]="searchCriteria.groupId">
+              <option [ngValue]="undefined">Tous les groupes</option>
+              <option *ngFor="let g of groups()" [ngValue]="g.groupId">{{ g.groupName }}</option>
+            </select>
+          </div>
+
+          <div class="fg">
+            <label class="fl">Branche</label>
+            <select class="fs" [(ngModel)]="searchCriteria.businessId">
+              <option [ngValue]="undefined">— Toutes —</option>
+              <option *ngFor="let b of businesses()" [ngValue]="b.businessId">{{ b.businessName }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Section: Ticket -->
+        <div class="filter-section">
+          <div class="filter-section-label">Ticket</div>
+
+          <div class="fg">
+            <label class="fl">Statut</label>
+            <select class="fs" [(ngModel)]="searchCriteria.ticketStatus">
+              <option value="Open/Dispatched">Open / Dispatched</option>
+              <option value="Closed">Fermé</option>
+              <option value="All">Tous</option>
+            </select>
+          </div>
+
+          <div class="fg">
+            <label class="fl">Type</label>
+            <select class="fs" [(ngModel)]="searchCriteria.ticketTypeId">
+              <option [ngValue]="undefined">Tous types</option>
+              <option *ngFor="let t of ticketTypes()" [ngValue]="t.ticketTypeId">{{ t.typeName }}</option>
+            </select>
+          </div>
+
+          <div class="fg">
+            <label class="fl">Nom ATM</label>
+            <input type="text" class="fi" [(ngModel)]="searchCriteria.atmName" placeholder="ex: ATM-CAS-012" />
+          </div>
+
+          <div class="row2">
+            <div class="fg">
+              <label class="fl">Owner</label>
+              <input type="text" class="fi" [(ngModel)]="searchCriteria.owner" />
+            </div>
+            <div class="fg">
+              <label class="fl">Dispatché à</label>
+              <input type="text" class="fi" [(ngModel)]="searchCriteria.dispatchedTo" placeholder="Technicien…" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: Dates -->
+        <div class="filter-section">
+          <div class="filter-section-label">Période</div>
+
+          <div class="row2">
+            <div class="fg">
+              <label class="fl">Créé après</label>
+              <input type="datetime-local" class="fi" [(ngModel)]="searchCriteria.createdAfter" />
+            </div>
+            <div class="fg">
+              <label class="fl">Créé avant</label>
+              <input type="datetime-local" class="fi" [(ngModel)]="searchCriteria.createdBefore" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Section: SLA & Erreur -->
+        <div class="filter-section">
+          <div class="filter-section-label">SLA &amp; Erreur</div>
+
+          <div class="fg">
+            <label class="fl">Code erreur</label>
+            <select class="fs" [(ngModel)]="searchCriteria.errorCodeTypeId">
+              <option [ngValue]="undefined">Tous</option>
+              <option *ngFor="let ec of errorCodes()" [ngValue]="ec.errorCodeTypeId">
+                {{ ec.errorText || ec.errorCode }}
+              </option>
+            </select>
+          </div>
+
+          <div class="fg">
+            <label class="fl">Statut SLA</label>
+            <select class="fs" [(ngModel)]="searchCriteria.slaStatus">
+              <option *ngFor="let opt of slaStatusOptions()" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+          </div>
+
+          <div class="fg" *ngIf="showSlaHours()">
+            <label class="fl">Seuil SLA (heures)</label>
+            <input type="number" class="fi" min="0" [(ngModel)]="searchCriteria.slaHours" />
+          </div>
+        </div>
+
+        <!-- Section: Extra Data -->
+        <div class="filter-section">
+          <div class="filter-section-label">Extra Data</div>
+
+          <div class="row2">
+            <div class="fg">
+              <label class="fl">Champ XML</label>
+              <input type="text" class="fi" [(ngModel)]="searchCriteria.extraDataField" placeholder="Nom du champ" />
+            </div>
+            <div class="fg">
+              <label class="fl">Valeur</label>
+              <input type="text" class="fi" [(ngModel)]="searchCriteria.extraDataValue" />
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /filters-body -->
+
+      <!-- Actions -->
+      <div class="filter-actions">
+        <button type="button" class="btn btn-primary" (click)="search()">
+          <i class="ti ti-search"></i> Rechercher
+        </button>
+        <button type="button" class="btn btn-ghost" (click)="clear()">Effacer</button>
+      </div>
+
+      <!-- Direct Ticket ID fetch -->
+      <div class="ticket-id-row">
+        <div class="fg" style="flex:1">
+          <label class="fl">Ticket ID direct</label>
+          <input type="number" class="fi" [(ngModel)]="searchCriteria.ticketId" placeholder="ex: 100432" />
+        </div>
+        <button type="button" class="btn btn-primary" (click)="search()">
+          <i class="ti ti-arrow-right"></i>
+        </button>
+      </div>
+
+      <!-- Inline error -->
+      <div class="inline-error" *ngIf="error()">
+        <i class="ti ti-alert-circle"></i> {{ error() }}
+      </div>
+
+    </aside><!-- /filters-panel -->
+
+    <!-- Results panel -->
+    <section class="results-panel">
+
+      <div class="results-head">
+        <div class="results-head-left">
+          <i class="ti ti-list" aria-hidden="true"></i>
+          <span class="panel-title">Résultats</span>
+          <span class="results-badge">{{ results().length }} ticket(s)</span>
+        </div>
+        <div class="results-actions">
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            [disabled]="results().length === 0"
+            (click)="exportExcel()"
+            title="Exporter en Excel">
+            <i class="ti ti-file-spreadsheet"></i> Excel
+          </button>
+          <button
+            type="button"
+            class="btn btn-ghost btn-sm"
+            [disabled]="results().length === 0"
+            (click)="exportPdf()"
+            title="Exporter en PDF">
+            <i class="ti ti-file-type-pdf"></i> PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="ticket-table">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Type</th>
+              <th>Statut</th>
+              <th>ATM</th>
+              <th>Business</th>
+              <th>Branche</th>
+              <th>Dispatché à</th>
+              <th>Owner</th>
+              <th>Code err.</th>
+              <th>Texte erreur</th>
+              <th>Créé le</th>
+              <th>Modifié le</th>
+              <th>Fermé le</th>
+              <th>Durée</th>
+              <th>SLA</th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <!-- Loading -->
+            <tr *ngIf="isLoading()">
+              <td colspan="15">
+                <div class="table-state">
+                  <i class="ti ti-loader-2 spin"></i>
+                  <span>Chargement en cours…</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Empty -->
+            <tr *ngIf="!isLoading() && results().length === 0">
+              <td colspan="15">
+                <div class="table-state">
+                  <i class="ti ti-ticket"></i>
+                  <strong>Aucun résultat</strong>
+                  <span>Définissez vos critères et lancez une recherche</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Data rows -->
+            <tr *ngFor="let ticket of results()">
+              <td class="cell-id">{{ ticket.ticketId }}</td>
+              <td>{{ ticket.ticketType }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="{
+                  'b-open':       ticket.status === 'Open',
+                  'b-dispatched': ticket.status === 'Dispatched',
+                  'b-closed':     ticket.status === 'Closed'
+                }">
+                  <span class="dot"></span>{{ ticket.status }}
+                </span>
+              </td>
+              <td class="cell-atm">{{ ticket.atmName }}</td>
+              <td class="cell-muted">{{ ticket.businessName }}</td>
+              <td class="cell-muted">{{ ticket.branchName }}</td>
+              <td class="cell-muted">{{ ticket.dispatchedTo || '—' }}</td>
+              <td class="cell-muted">{{ ticket.owner || '—' }}</td>
+              <td class="cell-muted">{{ ticket.errorCode || '—' }}</td>
+              <td class="cell-muted">{{ ticket.errorText || '—' }}</td>
+              <td class="cell-muted">{{ ticket.created | date:'dd/MM/yy HH:mm' }}</td>
+              <td class="cell-muted">{{ ticket.lastChangeDate | date:'dd/MM/yy HH:mm' }}</td>
+              <td class="cell-muted">{{ ticket.closedDate ? (ticket.closedDate | date:'dd/MM/yy HH:mm') : '—' }}</td>
+              <td class="cell-muted">{{ ticket.duration }}</td>
+              <td>
+                <span class="sla-ok"     *ngIf="ticket.slaSummary === 'OK'">OK</span>
+                <span class="sla-warn"   *ngIf="ticket.slaSummary === 'At Risk'">At Risk</span>
+                <span class="sla-breach" *ngIf="ticket.slaSummary === 'Breached'">Breached</span>
+                <span class="cell-muted" *ngIf="!['OK','At Risk','Breached'].includes(ticket.slaSummary || '')">
+                  {{ ticket.slaSummary || '—' }}
+                </span>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div><!-- /table-wrap -->
+
+    </section><!-- /results-panel -->
+
+  </div><!-- /main-grid -->
+
+</div><!-- /page-wrapper -->

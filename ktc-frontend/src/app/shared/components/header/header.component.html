@@ -1,0 +1,136 @@
+<div class="app-topbar">
+  <div class="topbar-left">
+    <span class="topbar-status">
+      <span class="status-dot"></span>
+      Systèmes opérationnels
+    </span>
+    <span class="topbar-sep"></span>
+    <span>Plateforme de gestion ATM</span>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-session" [class.session-warning]="sessionWarning()">
+      <span class="session-icon">⏱</span>
+      Session expire dans {{ sessionCountdown() }}
+    </span>
+  </div>
+</div>
+
+<header class="app-header">
+
+  <!-- Brand -->
+  <a class="header-brand" routerLink="/dashboard">
+    <div class="brand-mark">K</div>
+    <div class="brand-text">
+      <span class="brand-name">KTC Web</span>
+      <span class="brand-sub">Gestion ATM</span>
+    </div>
+  </a>
+
+  <!-- Right actions -->
+  <div class="header-actions">
+
+    <!-- Administration -->
+    <button class="nav-btn" (click)="goToAdministration()" title="Administration">
+      Administration
+    </button>
+
+    <!-- Configuration (avec sous-menu) -->
+    <div class="config-menu-wrapper" (mouseenter)="openConfigMenu()" (mouseleave)="closeConfigMenu()">
+ <button
+  class="nav-btn"
+  [class.nav-btn--active]="isConfigRoute()"
+  title="View">
+  Vue
+  <span class="nav-btn__chevron">&#8964;</span>
+</button>
+
+      <div class="config-dropdown" *ngIf="isConfigMenuOpen()">
+        <button class="config-dropdown-item" [class.active]="isCampaignRoute()" (click)="goToCampaigns()">
+          <span class="config-dropdown-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+            </svg>
+          </span>
+          Campagnes marketing
+        </button>
+        <button class="config-dropdown-item" [class.active]="isTicketSearchRoute()" (click)="goToTicketSearch()">
+          <span class="config-dropdown-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          Ticket Search
+        </button>
+        <div class="config-dropdown-item">
+          <span class="config-dropdown-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          </span>
+          Dashboard
+          <div class="sub-menu">
+            <button class="sub-menu-item" (click)="goToDashboardPanel('overallAvailability')">Overall Availability</button>
+            <button class="sub-menu-item" (click)="goToDashboardPanel('transactionAvailability')">Transaction Availability</button>
+            <button class="sub-menu-item" (click)="goToDashboardPanel('EtatCassetteparATM')">Etat Cassette par ATM</button>
+            <button class="sub-menu-item" (click)="goToDashboardPanel('AssetHistoryByATM')">AssetHistoryByATM</button>
+
+            <button class="sub-menu-item" (click)="goToDashboardPanel('deviceAvailability')">Device Availability</button>
+            <button class="sub-menu-item" (click)="goToDashboardPanel('transactions')">Transactions</button>
+            <button class="sub-menu-item" (click)="goToDashboardPanel('supervisorSessionLengths')">Supervisor Session Lengths</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thème sombre / clair -->
+    <button class="nav-btn theme-toggle-btn" (click)="toggleTheme()" [attr.title]="themeLabel"
+      [attr.aria-label]="themeLabel">
+      <span class="nav-btn__icon">{{ themeIcon }}</span>
+    </button>
+
+    <!-- Actions distantes -->
+    <app-atm-remote-commands-menu />
+
+    <div class="header-divider"></div>
+
+    <!-- Profile -->
+    <div class="profile-wrapper" (click)="toggleProfile($event)">
+      <div class="avatar" [title]="user() ? user().username : 'Utilisateur'">
+        {{ userInitial() }}
+      </div>
+      <div class="profile-info">
+        <span class="profile-name">{{ user() ? user().username : '—' }}</span>
+        <span class="profile-role">{{ primaryRole() }}</span>
+      </div>
+      <span class="chevron" [class.open]="isProfileOpen()">&#8964;</span>
+    </div>
+
+    <!-- Dropdown -->
+    <div class="profile-dropdown" *ngIf="isProfileOpen()" (click)="$event.stopPropagation()">
+
+      <div class="dropdown-header">
+        <div class="dropdown-avatar">{{ userInitial() }}</div>
+        <div>
+          <div class="dropdown-name">{{ user() ? user().username : '—' }}</div>
+          <div class="dropdown-email">{{ user() ? user().email : '' }}</div>
+        </div>
+      </div>
+
+      <div class="dropdown-roles" *ngIf="roles().length > 0">
+        <span class="roles-label">Rôles</span>
+        <div class="roles-list">
+          <span class="role-badge" *ngFor="let role of roles()">{{ role }}</span>
+        </div>
+      </div>
+
+      <div class="dropdown-divider"></div>
+
+      <button class="logout-btn" (click)="logout()">
+        <span class="logout-icon">⎋</span>
+        Déconnexion
+      </button>
+
+    </div>
+
+  </div>
+</header>

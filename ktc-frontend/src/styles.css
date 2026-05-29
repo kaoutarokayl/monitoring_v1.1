@@ -1,0 +1,428 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Serif+Display&display=swap');
+
+/* Global Styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Brand */
+  --brand-50: #eef2ff;
+  --brand-100: #e0e7ff;
+  --brand-500: #2563eb;
+  --brand-600: #1d4ed8;
+
+  /* Semantic */
+  --success-50: #ecfdf5;
+  --success-500: #16a34a;
+  --warning-50: #fffbeb;
+  --warning-500: #f97316;
+  --danger-50: #fef2f2;
+  --danger-500: #dc2626;
+
+  /* Neutrals */
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-secondary: #475569;
+  --muted: #64748b;
+  --header-bg: #ffffff;
+  --header-border: #eaedf2;
+  --header-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 4px 16px rgba(15, 23, 42, 0.04);
+  --header-hover: #f8fafc;
+  --hover-bg: #f1f5f9;
+  --panel-bg: #ffffff;
+  --brand-lt: #eff6ff;
+  --brand-mid: #bfdbfe;
+  --ok-lt: #ecfdf5;
+  --ok-mid: #bbf7d0;
+  --warn-lt: #fffbeb;
+  --warn-mid: #fde68a;
+  --danger-lt: #fef2f2;
+  --danger-mid: #fecaca;
+  --info: #0891b2;
+  --info-lt: #ecfeff;
+
+  /* Effects */
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 10px 30px rgba(15, 23, 42, 0.10);
+  --shadow-lg: 0 18px 55px rgba(15, 23, 42, 0.12);
+
+  /* Radius */
+  --r-sm: 10px;
+  --r-md: 12px;
+  --r-lg: 14px;
+}
+
+html.theme-dark {
+  --bg: #0f172a;
+  --surface: #111827;
+  --surface-2: #1f2937;
+  --border: #334155;
+  --text: #f8fafc;
+  --text-secondary: #e2e8f0;
+  --muted: #94a3b8;
+  --header-bg: #111827;
+  --header-border: #1f2937;
+  --header-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 4px 16px rgba(0, 0, 0, 0.22);
+  --header-hover: rgba(255, 255, 255, 0.05);
+  --hover-bg: #1f2937;
+  --panel-bg: #111827;
+  --brand-lt: rgba(59, 130, 246, 0.18);
+  --brand-mid: rgba(59, 130, 246, 0.28);
+  --ok-lt: rgba(52, 211, 153, 0.14);
+  --ok-mid: rgba(52, 211, 153, 0.24);
+  --warn-lt: rgba(251, 191, 36, 0.14);
+  --warn-mid: rgba(251, 191, 36, 0.24);
+  --danger-lt: rgba(248, 113, 113, 0.12);
+  --danger-mid: rgba(248, 113, 113, 0.24);
+  --info: #38bdf8;
+  --info-lt: rgba(56, 189, 248, 0.14);
+}
+
+html.theme-light {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-secondary: #475569;
+  --muted: #64748b;
+  --header-bg: #ffffff;
+  --header-border: #eaedf2;
+  --header-shadow: 0 1px 0 rgba(15, 23, 42, 0.04), 0 4px 16px rgba(15, 23, 42, 0.04);
+  --header-hover: #f8fafc;
+  --hover-bg: #f1f5f9;
+  --panel-bg: #ffffff;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg);
+  color: var(--text);
+}
+
+app-root {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Layout helpers */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.card--soft {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.98));
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: var(--r-sm);
+  border: 1px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 120ms ease, filter 120ms ease, background-color 120ms ease, border-color 120ms ease;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--brand-500);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--brand-600);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--brand-500);
+  border-color: var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--surface-2);
+  border-color: var(--border);
+  transform: translateY(-1px);
+}
+
+/* Badges (ATM status) */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  border: 1px solid transparent;
+}
+
+.badge--ok {
+  background: var(--success-50);
+  color: #166534;
+  border-color: rgba(22, 163, 74, 0.25);
+}
+
+.badge--warn {
+  background: var(--warning-50);
+  color: #92400e;
+  border-color: rgba(217, 119, 6, 0.25);
+}
+
+.badge--down {
+  background: var(--danger-50);
+  color: #991b1b;
+  border-color: rgba(220, 38, 38, 0.25);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #764ba2;
+}
+
+/* Focus Styles */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background: #667eea;
+  color: white;
+}
+
+::-moz-selection {
+  background: #667eea;
+  color: white;
+}
+
+html.theme-dark body,
+body.theme-dark {
+  background: var(--bg);
+  color: var(--text);
+}
+
+html.theme-dark .app-root,
+html.theme-dark .app-layout,
+html.theme-dark .app-body,
+html.theme-dark .card,
+html.theme-dark .card--soft,
+html.theme-dark .sidebar,
+html.theme-dark .admin-content,
+html.theme-dark .remote-menu__panel,
+html.theme-dark .profile-dropdown,
+html.theme-dark .modal-dialog,
+html.theme-dark .dropdown-header,
+html.theme-dark .modal-header,
+html.theme-dark .tab-content,
+html.theme-dark .tree-row,
+html.theme-dark .leaf-node,
+html.theme-dark .group-card,
+html.theme-dark .list-item,
+html.theme-dark .remote-menu__item,
+html.theme-dark .tab-btn,
+html.theme-dark .btn-secondary,
+html.theme-dark .btn-ghost,
+html.theme-dark .nav-btn,
+html.theme-dark .remote-menu__trigger,
+html.theme-dark .atm-card,
+html.theme-dark .kpi-card,
+html.theme-dark .toolbar,
+html.theme-dark .card-toolbar,
+html.theme-dark .search-input,
+html.theme-dark .filter-btn,
+html.theme-dark .sort-chip,
+html.theme-dark .meta-row,
+html.theme-dark .col-ip code,
+html.theme-dark .group-row,
+html.theme-dark .client-row,
+html.theme-dark .atm-row,
+html.theme-dark .node-ip,
+html.theme-dark .node-label,
+html.theme-dark .sidebar-header,
+html.theme-dark .tabs,
+html.theme-dark .remote-menu__item--sub,
+html.theme-dark .remote-menu__msg,
+html.theme-dark .mono {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+html.theme-dark .btn-secondary:hover,
+html.theme-dark .btn-ghost:hover,
+html.theme-dark .nav-btn:hover,
+html.theme-dark .remote-menu__trigger:hover,
+html.theme-dark .tree-row:hover,
+html.theme-dark .leaf-node:hover,
+html.theme-dark .tab-btn:hover,
+html.theme-dark .remote-menu__item:hover,
+html.theme-dark .remote-menu__item--sub:hover,
+html.theme-dark .profile-wrapper:hover,
+html.theme-dark .filter-btn:hover,
+html.theme-dark .sort-chip:hover,
+html.theme-dark .client-row:hover,
+html.theme-dark .atm-row:hover,
+html.theme-dark .list-item:hover {
+  background: var(--hover-bg) !important;
+  color: var(--text) !important;
+}
+
+html.theme-dark ::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+html.theme-dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+html.theme-dark ::selection {
+  background: #4f46e5;
+  color: white;
+}
+
+.theme-dark .card,
+.theme-dark .card--soft,
+.theme-dark .app-body,
+.theme-dark .admin-content,
+.theme-dark .sidebar,
+.theme-dark .remote-menu__panel,
+.theme-dark .profile-dropdown,
+.theme-dark .modal-dialog,
+.theme-dark .modal-header,
+.theme-dark .modal-content,
+.theme-dark .modal-icon,
+.theme-dark .group-card,
+.theme-dark .panel,
+.theme-dark .panel-header,
+.theme-dark .panel-title,
+.theme-dark .panel-badge,
+.theme-dark .filters-row,
+.theme-dark .search-bar,
+.theme-dark .tab-content,
+.theme-dark .panel-body,
+.theme-dark .panel-footer,
+.theme-dark .login-card,
+.theme-dark .login-box,
+.theme-dark .form-card,
+.theme-dark .form-panel,
+.theme-dark .table-wrap,
+.theme-dark table,
+.theme-dark thead th,
+.theme-dark tbody td,
+.theme-dark .filter-input,
+.theme-dark .filter-select,
+.theme-dark .search-input,
+.theme-dark input,
+.theme-dark textarea,
+.theme-dark select,
+.theme-dark .btn-secondary,
+.theme-dark .btn-reset,
+.theme-dark .btn--secondary,
+.theme-dark .badge,
+.theme-dark .status-badge,
+.theme-dark .status--muted,
+.theme-dark .status--ok,
+.theme-dark .status--warn,
+.theme-dark .status--danger,
+.theme-dark .status--info,
+.theme-dark .login-panel,
+.theme-dark .panel-block,
+.theme-dark .panel-row,
+.theme-dark .data-card {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+.theme-dark .remote-menu__item,
+.theme-dark .remote-menu__trigger,
+.theme-dark .nav-btn,
+.theme-dark .tab-btn,
+.theme-dark .tree-row,
+.theme-dark .leaf-node,
+.theme-dark .btn-secondary,
+.theme-dark .btn-reset,
+.theme-dark .btn--secondary {
+  color: var(--text) !important;
+}
+
+
+.theme-dark .remote-menu__item:hover,
+.theme-dark .nav-btn:hover,
+.theme-dark .tab-btn:hover,
+.theme-dark .tree-row:hover,
+.theme-dark .leaf-node:hover,
+.theme-dark .btn-secondary:hover,
+.theme-dark .btn-reset:hover,
+.theme-dark .btn--secondary:hover {
+  background: var(--hover-bg) !important;
+  color: var(--text) !important;
+}
+
+/* ===== COHÉRENCE TYPOGRAPHIQUE — ATM REMOTE COMMANDS ===== */
+/* Force DM Sans sur le composant remote commands pour matcher le header */
+app-atm-remote-commands-menu,
+app-atm-remote-commands-menu *,
+app-atm-remote-commands-menu button,
+app-atm-remote-commands-menu [role="button"],
+app-atm-remote-commands-menu .remote-menu__trigger,
+app-atm-remote-commands-menu .remote-menu__item,
+app-atm-remote-commands-menu .remote-menu__item--sub {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-size: 13px !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  font-weight: 400 !important;
+}

@@ -1,0 +1,276 @@
+<div class="page-wrapper">
+
+  <!-- ── Page header ─────────────────────────────────────────────────────── -->
+  <div class="page-head">
+    <div>
+      <div class="page-breadcrumb">
+        Configuration <span>›</span> Campagnes
+      </div>
+      <h1 class="page-title">Campagnes marketing</h1>
+      <p class="page-subtitle">Gestion et supervision des campagnes ATM</p>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-secondary" (click)="load()">
+        <span class="btn-icon-label">↺</span> Actualiser
+      </button>
+      <button class="btn btn-primary"
+        [disabled]="!canEditCampaign()"
+        (click)="goCreate()"
+        [title]="canEditCampaign() ? 'Nouvelle campagne' : 'Vous n\'avez pas les droits pour créer une campagne'">
+        <span class="btn-icon-label">＋</span> Nouvelle campagne
+      </button>
+    </div>
+  </div>
+
+  <!-- ── KPI strip ───────────────────────────────────────────────────────── -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <span class="kpi-value">{{ filtered().length }}</span>
+      <span class="kpi-label">Total affiché</span>
+    </div>
+    <div class="kpi-card kpi-card--enabled">
+      <span class="kpi-value">{{ enabledCount() }}</span>
+      <span class="kpi-label">Activées</span>
+    </div>
+    <div class="kpi-card kpi-card--disabled">
+      <span class="kpi-value">{{ disabledCount() }}</span>
+      <span class="kpi-label">Désactivées</span>
+    </div>
+    <div class="kpi-card kpi-card--expired">
+      <span class="kpi-value">{{ expiredCount() }}</span>
+      <span class="kpi-label">Expirées</span>
+    </div>
+  </div>
+
+  <!-- ── Top row: filters + status ───────────────────────────────────────── -->
+  <div class="top-row">
+
+    <!-- Filter panel -->
+    <div class="card-surface">
+      <div class="filter-head">
+        <span class="filter-head-label">Filtres</span>
+      </div>
+      <div class="filter-body">
+
+        <div class="filter-group">
+          <label class="filter-label">Business</label>
+          <select class="filter-select"
+            [ngModel]="businessFilter()"
+            (ngModelChange)="businessFilter.set($event)">
+            <option value="">Tous</option>
+            <option *ngFor="let b of businesses()" [value]="b.businessId">{{ b.businessName }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Nom de campagne</label>
+          <input class="filter-input" type="text" placeholder="Rechercher…"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)" />
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Statut</label>
+          <select class="filter-select"
+            [ngModel]="statusFilter()"
+            (ngModelChange)="statusFilter.set($event === '' ? null : +$event)">
+            <option value="">Tous</option>
+            <option value="0">Activée</option>
+            <option value="1">Désactivée</option>
+            <option value="2">Expirée</option>
+            <option value="3">Purgée</option>
+            <option value="4">Annulée</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Type</label>
+          <select class="filter-select"
+            [ngModel]="typeFilter()"
+            (ngModelChange)="typeFilter.set($event === '' ? null : +$event)">
+            <option value="">Tous</option>
+            <option value="0">Générale</option>
+            <option value="1">Ciblée</option>
+            <option value="2">Externe</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Status panel -->
+    <div class="card-surface status-panel">
+      <div class="filter-head">
+        <span class="filter-head-label">État du système</span>
+      </div>
+      <div class="status-body">
+        <div class="status-row">
+          <span class="status-dot dot-green"></span>
+          <span class="status-key">Marketing global :</span>
+          <span class="status-val">Actif</span>
+        </div>
+        <div class="status-row">
+          <span class="status-dot dot-gray"></span>
+          <span class="status-key">Business actuel :</span>
+          <span class="status-val">{{ currentBusiness() || 'Tous' }}</span>
+        </div>
+        <div class="status-row">
+          <span class="status-dot dot-none"></span>
+          <span class="status-key">Campagne test :</span>
+          <span class="status-val">{{ testCampaignName() || '—' }}</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Loading ─────────────────────────────────────────────────────────── -->
+  <div *ngIf="isLoading()" class="table-surface">
+    <div class="table-head">
+      <span class="table-head-label">Campagnes</span>
+    </div>
+    <div class="skeleton-rows">
+      <div class="skeleton-row" *ngFor="let i of [1,2,3,4,5,6]">
+        <div class="skeleton-cell"></div>
+        <div class="skeleton-cell"></div>
+        <div class="skeleton-cell"></div>
+        <div class="skeleton-cell"></div>
+        <div class="skeleton-cell"></div>
+        <div class="skeleton-cell"></div>
+        <div class="skeleton-cell"></div>
+        <div class="skeleton-cell"></div>
+        <div class="skeleton-cell"></div>
+        <div class="skeleton-cell"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Error ───────────────────────────────────────────────────────────── -->
+  <div *ngIf="error() && !isLoading()" class="error-box">
+    <span>⚠️ {{ error() }}</span>
+    <button class="btn btn-secondary btn--sm" (click)="load()">Réessayer</button>
+  </div>
+
+  <!-- ── Table ───────────────────────────────────────────────────────────── -->
+  <div *ngIf="!isLoading() && !error()" class="table-surface">
+
+    <div class="table-head">
+      <span class="table-head-label">Campagnes</span>
+      <span class="table-count">{{ filtered().length }} résultat(s)</span>
+    </div>
+
+    <div class="table-wrapper">
+      <table class="campaigns-table">
+        <thead>
+          <tr>
+            <th (click)="sort('name')">Nom <span class="sort-icon">{{ sortIcon('name') }}</span></th>
+            <th (click)="sort('campaignStatus')">Statut <span class="sort-icon">{{ sortIcon('campaignStatus') }}</span></th>
+            <th (click)="sort('campaignType')">Type <span class="sort-icon">{{ sortIcon('campaignType') }}</span></th>
+            <th (click)="sort('interactive')">Interactivité <span class="sort-icon">{{ sortIcon('interactive') }}</span></th>
+            <th (click)="sort('priority')">Prio. <span class="sort-icon">{{ sortIcon('priority') }}</span></th>
+            <th (click)="sort('startDate')">Début <span class="sort-icon">{{ sortIcon('startDate') }}</span></th>
+            <th (click)="sort('endDate')">Fin <span class="sort-icon">{{ sortIcon('endDate') }}</span></th>
+            <th (click)="sort('purgeDate')">Purge <span class="sort-icon">{{ sortIcon('purgeDate') }}</span></th>
+            <th>Business</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- Empty -->
+          <tr *ngIf="filtered().length === 0">
+            <td colspan="10" style="padding:0; border:none;">
+              <div class="empty-state">
+                <div class="empty-icon">📢</div>
+                <p>Aucune campagne ne correspond aux filtres actifs</p>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Rows -->
+          <tr
+            *ngFor="let c of filtered()"
+            [class.row-selected]="isSelected(c.campaignId)"
+            (click)="selectCampaign(c.campaignId)"
+            (dblclick)="goEdit(c.campaignId)"
+          >
+            <td class="cell-name">{{ c.name }}</td>
+
+            <td>
+              <span [ngClass]="statusBadgeClass(c.campaignStatus)">
+                {{ getStatusLabel(c.campaignStatus) }}
+              </span>
+            </td>
+
+            <td>
+              <span [ngClass]="typeBadgeClass(c.campaignType)">
+                {{ getTypeLabel(c.campaignType) }}
+              </span>
+            </td>
+
+            <td class="cell-muted">{{ c.interactive ? 'Interactive' : 'Non-interactive' }}</td>
+
+            <td class="cell-center">{{ c.priority }}</td>
+
+            <td class="cell-muted">{{ c.startDate | date:'dd/MM/yyyy' }}</td>
+            <td class="cell-muted">{{ c.endDate   | date:'dd/MM/yyyy' }}</td>
+            <td class="cell-muted">{{ c.purgeDate | date:'dd/MM/yyyy' }}</td>
+
+            <td class="cell-muted">{{ getCampaignBusinessNames(c.campaignId) }}</td>
+
+            <td>
+              <div class="cell-actions">
+                <button class="icon-btn icon-btn--edit" title="Modifier"
+                  [disabled]="!canEditCampaign()"
+                  (click)="goEdit(c.campaignId); $event.stopPropagation()">✏️</button>
+                <button class="icon-btn icon-btn--del" title="Supprimer"
+                  [disabled]="!canEditCampaign()"
+                  (click)="deleteCampaign(c.campaignId, $event)">🗑</button>
+              </div>
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <div class="table-footer">
+      <span>{{ filtered().length }} campagne(s) affichée(s)</span>
+      <span *ngIf="selectedCampaignId()">
+        Sélectionnée : #{{ selectedCampaignId() }}
+      </span>
+    </div>
+
+  </div>
+
+  <!-- ── Footer actions ──────────────────────────────────────────────────── -->
+  <div class="footer-actions">
+    <div class="footer-left">
+      <button class="btn btn-secondary"
+        [disabled]="!selectedCampaignId() || !canEditCampaign()"
+        (click)="goEdit(selectedCampaignId()!)"
+        [title]="canEditCampaign() ? 'Éditer la campagne' : 'Vous n\'avez pas les droits pour modifier'">
+        ✏️ Éditer
+      </button>
+      <button class="btn btn-secondary"
+        [disabled]="!selectedCampaignId()"
+        (click)="goDetails(selectedCampaignId()!)">
+        Propriétés
+      </button>
+      <button class="btn btn-secondary"
+        [disabled]="!selectedCampaignId()"
+        (click)="openMarketingControl()">
+        Marketing Control…
+      </button>
+    </div>
+    <div class="footer-right">
+      <button class="btn btn-danger"
+        [disabled]="!selectedCampaignId() || !canEditCampaign()"
+        (click)="deleteCampaign(selectedCampaignId()!, $event)"
+        [title]="canEditCampaign() ? 'Supprimer la campagne sélectionnée' : 'Vous n\'avez pas les droits pour supprimer'">
+        🗑 Supprimer
+      </button>
+    </div>
+  </div>
+
+</div>

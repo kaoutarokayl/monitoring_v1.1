@@ -1,0 +1,120 @@
+<div class="grafana-page" [class.fullscreen]="isFullscreen()">
+
+  <!-- ══════════════════════════════════════════════════════════
+       HEADER
+  ══════════════════════════════════════════════════════════ -->
+  <header class="grafana-header">
+
+    <!-- Left : logo + title -->
+    <div class="grafana-header__left">
+      <div class="grafana-badge">
+        <span class="grafana-badge-inner">KTC</span>
+      </div>
+      <div class="grafana-header-text">
+        <h1 class="grafana-title">Dashboard ATM</h1>
+        <span class="grafana-subtitle">Supervision du réseau bancaire</span>
+      </div>
+    </div>
+
+    <!-- Right : range selector + controls -->
+    <div class="grafana-header__right">
+
+      <!-- Live indicator -->
+      <div class="live-indicator">
+        <div class="live-dot"></div>
+        <span class="live-label">Live</span>
+      </div>
+
+      <!-- Clock -->
+      <div class="header-clock">
+        <span class="clock-time">{{ currentTime() }}</span>
+        <span class="clock-date">{{ currentDate() }}</span>
+      </div>
+
+      <div class="header-divider"></div>
+
+      <!-- Range pills -->
+      <div class="range-pills">
+        <button
+          *ngFor="let r of ranges"
+          class="range-pill"
+          [class.active]="activeRange() === r"
+          (click)="setRange(r)">
+          {{ r.label }}
+        </button>
+      </div>
+
+      <div class="header-divider"></div>
+
+      <!-- Refresh -->
+      <button class="btn-refresh" title="Rafraîchir" (click)="refresh()">
+        <span [class.spinning]="isRefreshing()">↺</span>
+      </button>
+
+      <!-- Export PDF -->
+      <button class="btn-export" title="Exporter en PDF" (click)="exportPdf()">
+        <span>📄</span>
+      </button>
+
+      <!-- Fullscreen -->
+      <button class="btn-fullscreen" title="Plein écran" (click)="toggleFullscreen()">
+        <span>{{ isFullscreen() ? '⊡' : '⊞' }}</span>
+      </button>
+
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════
+       STATUS BAR
+  ══════════════════════════════════════════════════════════ -->
+  <div class="status-bar">
+    <div class="status-item">
+      <span class="status-dot status-dot--ok"></span>
+      <span class="status-label">Réseau</span>
+      <span class="status-value status-value--ok">Opérationnel</span>
+    </div>
+    <div class="status-separator"></div>
+    <div class="status-item">
+      <span class="status-label">Période</span>
+      <span class="status-value">{{ activeRange().label }}</span>
+    </div>
+    <div class="status-separator"></div>
+    <div class="status-item">
+      <span class="status-label">Source</span>
+      <span class="status-value">Grafana · KTC Analytics</span>
+    </div>
+    <div class="status-separator"></div>
+    <div class="status-item">
+      <span class="status-label">Plage</span>
+      <span class="status-value">{{ activeRange().from }} → {{ activeRange().to }}</span>
+    </div>
+    <div class="status-bar__right">
+      <span class="refresh-badge">AUTO · 30s</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       GRAFANA FRAME
+  ══════════════════════════════════════════════════════════ -->
+  <section class="grafana-container">
+
+    <!-- Inner corners (top-right + bottom-left) -->
+    <div class="grafana-corners"></div>
+
+    <!-- Loading overlay -->
+    <div *ngIf="isRefreshing()" class="frame-loading">
+      <div class="frame-spinner"></div>
+      <span class="frame-loading-text">Chargement du tableau de bord…</span>
+    </div>
+
+    <iframe
+      class="grafana-frame"
+      [src]="grafanaUrl()"
+      frameborder="0"
+      allowfullscreen
+      (load)="onFrameLoad()">
+    </iframe>
+
+  </section>
+
+</div>

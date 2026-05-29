@@ -1,0 +1,295 @@
+<div class="page-wrapper">
+
+  <!-- ── Page header ─────────────────────────────────────────────────────── -->
+  <div class="page-head">
+    <div>
+      <div class="page-breadcrumb">
+        Configuration <span>›</span> Campagnes
+        <span>›</span> {{ isEditing() ? 'Modifier' : 'Nouvelle campagne' }}
+      </div>
+      <h1 class="page-title">
+        {{ isEditing() ? 'Modifier la campagne' : 'Nouvelle campagne' }}
+      </h1>
+      <p class="page-subtitle" *ngIf="isEditing()">
+        Campaign ID : #{{ campaignId }}
+      </p>
+      <p class="page-subtitle" *ngIf="!isEditing()">
+        Renseignez les informations de la nouvelle campagne
+      </p>
+    </div>
+    <div class="head-actions">
+      <button class="btn btn-secondary" routerLink="/campaign">
+        ✕ Annuler
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Loading ─────────────────────────────────────────────────────────── -->
+  <div *ngIf="isLoading()" class="state-box">
+    <div class="spinner"></div>
+    <span>Chargement de la campagne…</span>
+  </div>
+
+  <!-- ── Error ───────────────────────────────────────────────────────────── -->
+  <div *ngIf="error() && !isLoading()" class="error-box">
+    <span>⚠️ {{ error() }}</span>
+  </div>
+
+  <!-- ── Form ────────────────────────────────────────────────────────────── -->
+  <div *ngIf="!isLoading()">
+    <form [formGroup]="form" (ngSubmit)="submit()">
+
+      <!-- ── Tabs ──────────────────────────────────────────────────────── -->
+      <div class="tabs-bar">
+        <button type="button" class="tab-btn" [class.tab-active]="activeTab() === 'general'" (click)="activeTab.set('general')">
+          Général
+        </button>
+        <button type="button" class="tab-btn" [class.tab-active]="activeTab() === 'display'" (click)="activeTab.set('display')">
+          Affichage
+        </button>
+        <button type="button" class="tab-btn" [class.tab-active]="activeTab() === 'data'" (click)="activeTab.set('data')">
+          Données XML
+        </button>
+      </div>
+
+      <!-- ═══════════════ Tab: Général ══════════════════════════════════ -->
+      <div *ngIf="activeTab() === 'general'" class="tab-content" style="margin-top:16px">
+
+        <!-- Identification -->
+        <div class="section-card">
+          <div class="section-head"><span class="section-title">Identification</span></div>
+          <div class="section-body">
+            <div class="form-grid-2">
+              <div class="form-field col-full">
+                <label class="field-label">Nom de la campagne <span class="field-required">*</span></label>
+                <input type="text" formControlName="name" class="field-input" placeholder="Ex : Promo Été 2025" />
+                <span *ngIf="getFormError('name')" class="field-error">⚠ {{ getFormError('name') }}</span>
+              </div>
+              <div class="form-field">
+                <label class="field-label">Nom du package</label>
+                <input type="text" formControlName="packageName" class="field-input" placeholder="com.atm.promo" />
+              </div>
+              <div class="form-field">
+                <label class="field-label">ID externe</label>
+                <input type="text" formControlName="externalId" class="field-input" placeholder="Référence externe" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Type & Statut -->
+        <div class="section-card">
+          <div class="section-head"><span class="section-title">Type &amp; Statut</span></div>
+          <div class="section-body">
+            <div class="form-grid-4">
+
+              <div class="form-field">
+                <label class="field-label">Type <span class="field-required">*</span></label>
+                <select formControlName="campaignType" class="field-select">
+                  <option *ngFor="let t of campaignTypes" [value]="t.value">{{ t.label }}</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">Statut <span class="field-required">*</span></label>
+                <select formControlName="campaignStatus" class="field-select">
+                  <option *ngFor="let s of campaignStatuses" [value]="s.value">{{ s.label }}</option>
+                </select>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">Priorité (1–10) <span class="field-required">*</span></label>
+                <input type="number" formControlName="priority" class="field-input" min="1" max="10" />
+                <span *ngIf="getFormError('priority')" class="field-error">⚠ {{ getFormError('priority') }}</span>
+              </div>
+
+              <div></div><!-- spacer -->
+
+              <label class="checkbox-field">
+                <input type="checkbox" formControlName="interactive" class="field-checkbox" />
+                <div class="checkbox-text">
+                  <span class="checkbox-label">Interactive</span>
+                  <p class="field-hint">Permet une réponse client</p>
+                </div>
+              </label>
+
+              <label class="checkbox-field">
+                <input type="checkbox" formControlName="campaignInTestmode" class="field-checkbox" />
+                <div class="checkbox-text">
+                  <span class="checkbox-label">Mode test</span>
+                  <p class="field-hint">Pour usage interne uniquement</p>
+                </div>
+              </label>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Dates -->
+        <div class="section-card">
+          <div class="section-head"><span class="section-title">Dates</span></div>
+          <div class="section-body">
+            <div class="form-grid-3">
+
+              <div class="form-field">
+                <label class="field-label">Date de début <span class="field-required">*</span></label>
+                <input type="date" formControlName="startDate" class="field-input" />
+                <span *ngIf="getFormError('startDate')" class="field-error">⚠ {{ getFormError('startDate') }}</span>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">Date de fin <span class="field-required">*</span></label>
+                <input type="date" formControlName="endDate" class="field-input" />
+                <span *ngIf="getFormError('endDate')" class="field-error">⚠ {{ getFormError('endDate') }}</span>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">Date de purge <span class="field-required">*</span></label>
+                <input type="date" formControlName="purgeDate" class="field-input" />
+                <p class="field-hint">Les données seront supprimées après cette date</p>
+                <span *ngIf="getFormError('purgeDate')" class="field-error">⚠ {{ getFormError('purgeDate') }}</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Businesses -->
+        <div class="section-card">
+          <div class="section-head">
+            <span class="section-title">Businesses {{ !isEditing() ? '— requis' : '' }}</span>
+          </div>
+          <div class="section-body">
+
+            <!-- Loading businesses -->
+            <div *ngIf="availableBusinesses().length === 0" class="loading-inline">
+              <div class="spinner-sm"></div>
+              <span>Chargement des businesses…</span>
+            </div>
+
+            <div *ngIf="availableBusinesses().length > 0">
+              <p class="field-hint" style="margin-bottom:12px">
+                {{ isEditing() ? 'Modifiez les businesses associés à cette campagne.' : 'Sélectionnez le(s) business(es) auxquels cette campagne sera associée.' }}
+              </p>
+
+              <div class="business-grid">
+                <label
+                  *ngFor="let b of availableBusinesses()"
+                  class="business-item"
+                  [class.business-selected]="isBusinessSelected(b.businessId)">
+                  <input
+                    type="checkbox"
+                    class="field-checkbox"
+                    [checked]="isBusinessSelected(b.businessId)"
+                    (change)="toggleBusiness(b.businessId)" />
+                  <span class="business-name">{{ b.businessName }}</span>
+                  <span class="business-id">#{{ b.businessId }}</span>
+                </label>
+              </div>
+
+              <p class="field-hint" style="margin-top:10px">
+                <strong>{{ selectedBusinessIds().length }}</strong> business(es) sélectionné(s)
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+      <!-- /tab général -->
+
+
+      <!-- ═══════════════ Tab: Affichage ════════════════════════════════ -->
+      <div *ngIf="activeTab() === 'display'" class="tab-content" style="margin-top:16px">
+
+        <div class="section-card">
+          <div class="section-head"><span class="section-title">Limites d'affichage</span></div>
+          <div class="section-body">
+            <div class="form-grid-2">
+
+              <div class="form-field">
+                <label class="field-label">Nombre max d'affichages</label>
+                <input type="number" formControlName="maxShows" class="field-input" min="0" />
+                <p class="field-hint">0 = illimité</p>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">Heures de repos après limite</label>
+                <input type="number" formControlName="restHours" class="field-input" min="0" />
+                <p class="field-hint">Délai avant réaffichage après la limite atteinte</p>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-head"><span class="section-title">Paramètres "Rappel ultérieur"</span></div>
+          <div class="section-body">
+            <div class="form-grid-2">
+
+              <div class="form-field">
+                <label class="field-label">Max affichages "Rappel ultérieur"</label>
+                <input type="number" formControlName="maxShowMeLaterShows" class="field-input" min="0" />
+                <p class="field-hint">0 = illimité</p>
+              </div>
+
+              <div class="form-field">
+                <label class="field-label">Heures de repos "Rappel ultérieur"</label>
+                <input type="number" formControlName="showMeLaterRestHours" class="field-input" min="0" />
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <!-- /tab affichage -->
+
+
+      <!-- ═══════════════ Tab: Données XML ══════════════════════════════ -->
+      <div *ngIf="activeTab() === 'data'" class="tab-content" style="margin-top:16px">
+
+        <div class="section-card">
+          <div class="section-head"><span class="section-title">Données XML</span></div>
+          <div class="section-body" style="display:flex;flex-direction:column;gap:16px">
+
+            <div class="form-field">
+              <label class="field-label">Données de la campagne (XML)</label>
+              <textarea formControlName="campaignData" class="field-textarea" rows="7"
+                placeholder="<?xml version='1.0'?>…"></textarea>
+              <p class="field-hint">Règles d'affichage supplémentaires</p>
+            </div>
+
+            <div class="form-field">
+              <label class="field-label">Données dynamiques (XML)</label>
+              <textarea formControlName="dynamicCampaignData" class="field-textarea" rows="7"
+                placeholder="<?xml version='1.0'?>…"></textarea>
+              <p class="field-hint">Valeurs dynamiques (ex : taux d'intérêt)</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+      <!-- /tab données -->
+
+
+      <!-- ── Footer ──────────────────────────────────────────────────── -->
+      <div class="form-footer" style="margin-top:8px">
+        <div class="footer-meta">
+          <span *ngIf="isEditing()">Campaign ID : <strong>#{{ campaignId }}</strong></span>
+        </div>
+        <div class="footer-actions">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+            <span *ngIf="isSubmitting()">Enregistrement…</span>
+            <span *ngIf="!isSubmitting()">{{ isEditing() ? '✔ Appliquer' : '✔ Créer la campagne' }}</span>
+          </button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+</div>
