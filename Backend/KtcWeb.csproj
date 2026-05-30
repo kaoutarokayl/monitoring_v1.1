@@ -25,6 +25,7 @@
     <PackageReference Include="runtime.win-x64.runtime.native.System.Data.SqlClient.sni" Version="4.4.0" />
     <PackageReference Include="SqlTableDependency" Version="8.5.5" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Dapper" Version="2.1.35" />
     <PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
     <PackageReference Include="System.DirectoryServices" Version="8.0.0" />
     <PackageReference Include="System.DirectoryServices.AccountManagement" Version="8.0.0" />

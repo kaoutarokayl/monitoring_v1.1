@@ -32,6 +32,10 @@ namespace KtcWeb.Infrastructure.Data
         // FIX: Added HistoricalCashUnitStatus so the cash flow report can query historical changes.
         public DbSet<HistoricalCashUnitStatus> HistoricalCashUnitStatus { get; set; } = null!;
 
+        // Ticket search results (keyless — used by SqlQueryRaw)
+        public DbSet<TicketSearchResultDto> TicketSearchResults { get; set; } = null!;
+        public DbSet<AtmTicketDto> AtmTickets { get; set; } = null!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<ClientAtmDto>()
@@ -64,6 +68,10 @@ namespace KtcWeb.Infrastructure.Data
             modelBuilder.Entity<HistoricalCashUnitStatus>()
                         .ToTable("HistoricalCashUnitStatus_P")
                         .HasNoKey();
+
+            // Ticket search — keyless projections for SqlQueryRaw
+            modelBuilder.Entity<TicketSearchResultDto>().HasNoKey().ToView(null);
+            modelBuilder.Entity<AtmTicketDto>().HasNoKey().ToView(null);
         }
     }
 }
